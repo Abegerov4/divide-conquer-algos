@@ -70,8 +70,11 @@ mvn compile
 # Run all tests
 mvn test
 
-# Run benchmarks
-mvn exec:java -Dexec.mainClass="cli.BenchmarkRunner"
+# Run benchmarks (используйте эту команду!)
+mvn exec:java -Dexec.mainClass=cli.BenchmarkRunner
+
+# Run demo of all algorithms
+mvn exec:java -Dexec.mainClass=Main
 
 # Generate CSV results
 # - sorting_benchmark.csv
