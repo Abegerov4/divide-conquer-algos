@@ -38,4 +38,22 @@ public class ArrayUtils {
         }
         return array;
     }
+
+    public static int[] copyArray(int[] array) {
+        int[] copy = new int[array.length];
+        System.arraycopy(array, 0, copy, 0, array.length);
+        return copy;
+    }
+
+    /**
+     * Checks if array contains value (linear search)
+     */
+    public static boolean contains(int[] array, int value) {
+        for (int element : array) {
+            if (element == value) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
