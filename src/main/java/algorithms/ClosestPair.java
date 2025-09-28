@@ -49,15 +49,26 @@ public class ClosestPair {
         Point midPoint = pointsByX[mid];
 
         // 3. Divide: split points by y-coordinate around vertical line
-        Point[] leftPointsByY = new Point[mid - left + 1];
-        Point[] rightPointsByY = new Point[right - mid];
-        metrics.recordAllocation(leftPointsByY.length + rightPointsByY.length);
+        List<Point> leftPointsByY = new ArrayList<>();
+        List<Point> rightPointsByY = new ArrayList<>();
 
-        splitPointsByY(pointsByY, midPoint, leftPointsByY, rightPointsByY);
+        for (Point point : pointsByY) {
+            metrics.recordComparison();
+            if (point.x < midPoint.x || (point.x == midPoint.x && point.y < midPoint.y)) {
+                leftPointsByY.add(point);
+            } else {
+                rightPointsByY.add(point);
+            }
+        }
+
+        // Convert lists back to arrays for recursion
+        Point[] leftArray = leftPointsByY.toArray(new Point[0]);
+        Point[] rightArray = rightPointsByY.toArray(new Point[0]);
+        metrics.recordAllocation(leftArray.length + rightArray.length);
 
         // 4. Conquer: find closest pairs in left and right halves
-        Point[] leftClosest = findClosestPair(pointsByX, leftPointsByY, left, mid);
-        Point[] rightClosest = findClosestPair(pointsByX, rightPointsByY, mid + 1, right);
+        Point[] leftClosest = findClosestPair(pointsByX, leftArray, left, mid);
+        Point[] rightClosest = findClosestPair(pointsByX, rightArray, mid + 1, right);
 
         // 5. Find minimum distance from both halves
         double leftDistance = distance(leftClosest[0], leftClosest[1]);
@@ -89,8 +100,9 @@ public class ClosestPair {
      * Brute force closest pair for small arrays (≤ 3 points)
      */
     private Point[] bruteForceClosestPair(Point[] points, int left, int right) {
-        Point[] closest = new Point[]{points[left], points[left + 1]};
-        double minDistance = distance(points[left], points[left + 1]);
+        Point point1 = points[left];
+        Point point2 = points[left + 1];
+        double minDistance = distance(point1, point2);
 
         for (int i = left; i <= right; i++) {
             for (int j = i + 1; j <= right; j++) {
@@ -98,29 +110,12 @@ public class ClosestPair {
                 double dist = distance(points[i], points[j]);
                 if (dist < minDistance) {
                     minDistance = dist;
-                    closest[0] = points[i];
-                    closest[1] = points[j];
+                    point1 = points[i];
+                    point2 = points[j];
                 }
             }
         }
-        return closest;
-    }
-
-    /**
-     * Split points by y-coordinate around vertical line through midPoint
-     */
-    private void splitPointsByY(Point[] pointsByY, Point midPoint,
-                                Point[] leftPoints, Point[] rightPoints) {
-        int leftIdx = 0, rightIdx = 0;
-
-        for (Point point : pointsByY) {
-            metrics.recordComparison();
-            if (point.x < midPoint.x || (point.x == midPoint.x && point.y < midPoint.y)) {
-                leftPoints[leftIdx++] = point;
-            } else {
-                rightPoints[rightIdx++] = point;
-            }
-        }
+        return new Point[]{point1, point2};
     }
 
     /**
@@ -129,8 +124,9 @@ public class ClosestPair {
     private Point[] findClosestInStrip(List<Point> strip, double minDistance) {
         if (strip.size() < 2) return null;
 
-        Point[] closest = null;
-        double minStripDistance = minDistance;
+        Point point1 = strip.get(0);
+        Point point2 = strip.get(1);
+        double minStripDistance = distance(point1, point2);
 
         for (int i = 0; i < strip.size(); i++) {
             // Check only the next 7 points (geometric property)
@@ -147,12 +143,13 @@ public class ClosestPair {
                 double dist = distance(p1, p2);
                 if (dist < minStripDistance) {
                     minStripDistance = dist;
-                    closest = new Point[]{p1, p2};
+                    point1 = p1;
+                    point2 = p2;
                 }
             }
         }
 
-        return closest;
+        return minStripDistance < minDistance ? new Point[]{point1, point2} : null;
     }
 
     private double distance(Point p1, Point p2) {
