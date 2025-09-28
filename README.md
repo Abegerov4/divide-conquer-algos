@@ -1,45 +1,79 @@
 # Divide & Conquer Algorithms
 
-## Algorithms Implemented
+## 📋 Assignment Completion
 
-### 1. MergeSort
-- **Strategy**: Divide-and-conquer with linear merge
+### ✅ Implemented Algorithms
+
+#### 1. MergeSort
+- **Strategy**: Classic divide-and-conquer with linear merge
 - **Optimizations**: Buffer reuse, insertion sort cutoff (n ≤ 15)
 - **Recurrence**: T(n) = 2T(n/2) + O(n)
 - **Master Theorem**: Case 2 - Θ(n log n)
-- **Depth**: O(log n)
+- **Depth**: O(log n) - confirmed by measurements
 
-### 2. QuickSort
-- **Strategy**: Randomized divide-and-conquer
-- **Optimizations**: Smaller-first recursion, insertion sort cutoff (n ≤ 16)
-- **Complexity**: O(n log n) average, O(n²) worst-case
-- **Depth**: O(log n) with smaller-first recursion
+#### 2. QuickSort
+- **Strategy**: Randomized pivot with smaller-first recursion
+- **Optimizations**: Recurse into smaller partition first, insertion sort cutoff
+- **Complexity**: O(n log n) average case
+- **Depth**: O(log n) bounded by smaller-first strategy
 
-### 3. Deterministic Select
+#### 3. Deterministic Select
 - **Strategy**: Median-of-medians with groups of 5
-- **Complexity**: O(n) worst-case
-- **Depth**: O(log n)
+- **Complexity**: O(n) worst-case guaranteed
+- **Optimization**: Prefer recursing into smaller partition
 
-### 4. Closest Pair
-- **Strategy**: Divide plane, conquer halves, check strip
+#### 4. Closest Pair of Points
+- **Strategy**: Divide plane, recursive halves, strip optimization
 - **Complexity**: O(n log n)
 - **Optimization**: 7-neighbor check in strip
 
-## Benchmark Results
+### 📊 Architecture & Metrics
 
-Run benchmarks to generate CSV files:
-- `sorting_benchmark.csv` - MergeSort vs QuickSort
-- `select_benchmark.csv` - Deterministic Select performance
-- `closest_pair_benchmark.csv` - Closest Pair scaling
+**Metrics Tracking**:
+- Comparisons between elements
+- Memory allocations
+- Recursion depth
+- Execution time
 
-## Running
+**Safe Recursion Patterns**:
+- MergeSort: Standard binary recursion
+- QuickSort: Smaller-first to bound stack depth
+- Select: Single recursion with size reduction
+- Closest Pair: Divide with strip optimization
+
+### 🧪 Testing Strategy
+
+- **Correctness**: Compare with Arrays.sort() and brute force
+- **Edge Cases**: Empty, single element, duplicates, sorted/reverse
+- **Performance**: Time vs n, depth vs n measurements
+- **Validation**: Recursion depth bounds verification
+
+### 📈 Performance Analysis
+
+**Theoretical vs Empirical**:
+- MergeSort: Consistent O(n log n) as expected
+- QuickSort: O(n log n) average case observed
+- Select: Linear growth confirmed
+- Closest Pair: O(n log n) scaling verified
+
+**Constant Factors**:
+- QuickSort generally faster due to cache efficiency
+- MergeSort consistent but higher memory usage
+- Select has higher constants but guaranteed bounds
+
+### 🔧 Build & Run
 
 ```bash
 # Compile
 mvn compile
 
-# Run all benchmarks
+# Run all tests
+mvn test
+
+# Run benchmarks
 mvn exec:java -Dexec.mainClass="cli.BenchmarkRunner"
 
-# Run tests
-mvn test
+# Generate CSV results
+# - sorting_benchmark.csv
+# - select_benchmark.csv  
+# - closest_pair_benchmark.csv

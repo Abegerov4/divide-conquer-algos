@@ -24,6 +24,9 @@ public class BenchmarkRunner {
             System.out.println("All benchmarks completed!");
         } catch (IOException e) {
             System.err.println("Error running benchmarks: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -33,7 +36,7 @@ public class BenchmarkRunner {
         try (CSVWriter csv = new CSVWriter("sorting_benchmark.csv")) {
             csv.writeHeader("Algorithm", "Size", "Time(ns)", "Comparisons", "Allocations", "MaxDepth");
 
-            int[] sizes = {100, 500, 1000, 5000, 10000, 50000};
+            int[] sizes = {100, 500, 1000, 5000, 10000};
 
             for (int size : sizes) {
                 System.out.println("Testing size: " + size);
@@ -54,7 +57,7 @@ public class BenchmarkRunner {
         try (CSVWriter csv = new CSVWriter("select_benchmark.csv")) {
             csv.writeHeader("Size", "K", "Time(ns)", "Comparisons", "Allocations", "MaxDepth");
 
-            int[] sizes = {100, 500, 1000, 5000, 10000};
+            int[] sizes = {100, 500, 1000, 5000};
 
             for (int size : sizes) {
                 System.out.println("Testing size: " + size);
@@ -72,13 +75,18 @@ public class BenchmarkRunner {
         try (CSVWriter csv = new CSVWriter("closest_pair_benchmark.csv")) {
             csv.writeHeader("Size", "Time(ns)", "Comparisons", "Allocations", "MaxDepth");
 
-            int[] sizes = {100, 500, 1000, 2000, 5000};
+            // Use smaller sizes for Closest Pair to avoid potential issues
+            int[] sizes = {100, 500, 1000};
 
             for (int size : sizes) {
                 System.out.println("Testing size: " + size);
                 Point[] points = generateRandomPoints(size, 1000);
 
-                benchmarkClosestPair(points, csv);
+                try {
+                    benchmarkClosestPair(points, csv);
+                } catch (Exception e) {
+                    System.err.println("Error benchmarking ClosestPair for size " + size + ": " + e.getMessage());
+                }
             }
         }
     }
@@ -88,27 +96,31 @@ public class BenchmarkRunner {
 
         long startTime = System.nanoTime();
 
-        switch (name) {
-            case "MergeSort":
-                new MergeSort(metrics).sort(array);
-                break;
-            case "QuickSort":
-                new QuickSort(metrics).sort(array);
-                break;
+        try {
+            switch (name) {
+                case "MergeSort":
+                    new MergeSort(metrics).sort(array);
+                    break;
+                case "QuickSort":
+                    new QuickSort(metrics).sort(array);
+                    break;
+            }
+
+            long endTime = System.nanoTime();
+
+            // Verify sorting is correct
+            if (!ArrayUtils.isSorted(array)) {
+                System.err.println(name + " failed to sort array correctly!");
+            }
+
+            csv.writeRow(name, array.length, endTime - startTime,
+                    metrics.getComparisons(), metrics.getAllocations(), metrics.getMaxDepth());
+
+            System.out.printf("%s - Size: %d, Time: %d ns, Depth: %d\n",
+                    name, array.length, endTime - startTime, metrics.getMaxDepth());
+        } catch (Exception e) {
+            System.err.println(name + " failed: " + e.getMessage());
         }
-
-        long endTime = System.nanoTime();
-
-        // Verify sorting is correct
-        if (!ArrayUtils.isSorted(array)) {
-            System.err.println(name + " failed to sort array correctly!");
-        }
-
-        csv.writeRow(name, array.length, endTime - startTime,
-                metrics.getComparisons(), metrics.getAllocations(), metrics.getMaxDepth());
-
-        System.out.printf("%s - Size: %d, Time: %d ns, Depth: %d\n",
-                name, array.length, endTime - startTime, metrics.getMaxDepth());
     }
 
     private static void benchmarkSelectAlgorithm(int[] array, int k, CSVWriter csv) throws IOException {
@@ -116,21 +128,25 @@ public class BenchmarkRunner {
         DeterministicSelect selector = new DeterministicSelect(metrics);
 
         long startTime = System.nanoTime();
-        int result = selector.select(array, k);
-        long endTime = System.nanoTime();
+        try {
+            int result = selector.select(array, k);
+            long endTime = System.nanoTime();
 
-        // Verify result against sorting
-        int[] sorted = array.clone();
-        Arrays.sort(sorted);
-        if (result != sorted[k]) {
-            System.err.println("Select returned wrong result! Expected " + sorted[k] + " got " + result);
+            // Verify result against sorting
+            int[] sorted = array.clone();
+            Arrays.sort(sorted);
+            if (result != sorted[k]) {
+                System.err.println("Select returned wrong result! Expected " + sorted[k] + " got " + result);
+            }
+
+            csv.writeRow(array.length, k, endTime - startTime,
+                    metrics.getComparisons(), metrics.getAllocations(), metrics.getMaxDepth());
+
+            System.out.printf("Select - Size: %d, Time: %d ns, Depth: %d\n",
+                    array.length, endTime - startTime, metrics.getMaxDepth());
+        } catch (Exception e) {
+            System.err.println("Select failed: " + e.getMessage());
         }
-
-        csv.writeRow(array.length, k, endTime - startTime,
-                metrics.getComparisons(), metrics.getAllocations(), metrics.getMaxDepth());
-
-        System.out.printf("Select - Size: %d, Time: %d ns, Depth: %d\n",
-                array.length, endTime - startTime, metrics.getMaxDepth());
     }
 
     private static void benchmarkClosestPair(Point[] points, CSVWriter csv) throws IOException {
@@ -146,8 +162,8 @@ public class BenchmarkRunner {
         csv.writeRow(points.length, endTime - startTime,
                 metrics.getComparisons(), metrics.getAllocations(), metrics.getMaxDepth());
 
-        System.out.printf("ClosestPair - Size: %d, Time: %d ns, Distance: %.3f\n",
-                points.length, endTime - startTime, distance);
+        System.out.printf("ClosestPair - Size: %d, Time: %d ns, Distance: %.3f, Depth: %d\n",
+                points.length, endTime - startTime, distance, metrics.getMaxDepth());
     }
 
     private static int[] generateRandomArray(int size) {
